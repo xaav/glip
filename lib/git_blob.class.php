@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (C) 2008 Patrik Fimml
+ * Copyright (C) 2008 Patrik Fimml, Sjoerd de Jong
  *
  * This file is part of glip.
  *
@@ -18,28 +18,32 @@
  * along with glip.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once('git_object.class.php');
+require_once('git_path_object.class.php');
 
-class GitBlob extends GitObject
+class GitBlob extends GitPathObject
 {
-    /**
-     * @brief The data contained in this blob.
-     */
-    public $data = NULL;
+  protected
+    $data = array(
+      'data' => null         // The data contained in this blob
+      ),
+    $mode = 0100640;         // The default mode for a BLOB
 
-    public function __construct($repo)
+  public function __construct(Git $git, $sha = null, $mode = null, $data = null)
+  {
+    parent::__construct($git, $sha, $mode);
+    if (!is_null($data))
     {
-	parent::__construct($repo, Git::OBJ_BLOB);
+      $this->data['data'] = $data;
     }
+  }
 
-    public function _unserialize($data)
-    {
-	$this->data = $data;
-    }
+  public function unserialize($data)
+  {
+  	$this->data['data'] = $data;
+  }
 
-    public function _serialize()
-    {
-	return $this->data;
-    }
+  protected function _serialize()
+  {
+  	return $this->data['data'];
+  }
 }
-

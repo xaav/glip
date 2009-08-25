@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (C) 2008, 2009 Patrik Fimml
+ * Copyright (C) 2008, 2009 Patrik Fimml, Sjoerd de Jong
  *
  * This file is part of glip.
  *
@@ -21,235 +21,352 @@
 class GitTreeError extends Exception {}
 class GitTreeInvalidPathError extends GitTreeError {}
 
-require_once('git_object.class.php');
+require_once('git_path_object.class.php');
 
-class GitTree extends GitObject
+class GitTree extends GitPathObject implements ArrayAccess, IteratorAggregate, Countable
 {
-    public $nodes = array();
+  protected
+    $data = array(
+      'nodes' => array()         // (array of $name => GitPathObject) The nodes referenced by this object
+      ),
+    $mode = 040000;              // the default mode for a tree object
 
-    public function __construct($repo)
+  public function unserialize($data)
+  {
+    $this->data['nodes'] = array();
+    $start = 0;
+    while ($start < strlen($data))
     {
-	parent::__construct($repo, Git::OBJ_TREE);
+      $pos = strpos($data, "\0", $start);
+      
+      list($mode, $name) = explode(' ', substr($data, $start, $pos-$start), 2);
+      
+      $mode = intval($mode, 8);
+      $is_dir = !!($mode & 040000);
+      $class = $is_dir ? "GitTree" : "GitBlob";
+      
+      $sha = new SHA(substr($data, $pos+1, 20));
+      
+      $start = $pos+21;
+  
+      $this->data['nodes'][$name] = new $class($this->git, $sha, $mode);
     }
+    unset($data);
+  }
 
-    public function _unserialize($data)
+  protected static function nodecmp(&$a, &$b)
+  {
+    return strcmp($a->getSha(), $b->getSha());
+  }
+
+  /**
+   * serialize serializes all objects
+   * it calls ->getSha() on all nodes, which will also lock all the subnodes recursively
+   *
+   * @return string The serialized representation of the tree
+   * @author The Young Shepherd
+   **/
+  protected function _serialize()
+  {
+    $s = '';
+    
+    /* git requires nodes to be sorted */
+    $this->nodes;  // not a no-op, it makes sure this object is loaded
+    uasort($this->data['nodes'], array('GitTree', 'nodecmp'));
+    
+    foreach ($this->nodes as $name => $node)
     {
-	$this->nodes = array();
-	$start = 0;
-	while ($start < strlen($data))
-	{
-	    $node = new stdClass;
-
-	    $pos = strpos($data, "\0", $start);
-	    list($node->mode, $node->name) = explode(' ', substr($data, $start, $pos-$start), 2);
-	    $node->mode = intval($node->mode, 8);
-            $node->is_dir = !!($node->mode & 040000);
-	    $node->object = substr($data, $pos+1, 20);
-	    $start = $pos+21;
-
-	    $this->nodes[$node->name] = $node;
-	}
-	unset($data);
+      $s .= sprintf("%s %s\0%s", 
+              base_convert($node->getMode(), 10, 8), 
+              $name, 
+              $node->getSha()->bin()
+            );
     }
+      
+    return $s;
+  }
 
-    protected static function nodecmp(&$a, &$b)
+  /**
+   * returns the relative path of an object in this 
+   *
+   * @param $obj (GitPathObject) The object to find the path for
+   * @return GitPath or null if not found
+   **/
+  public function getPath(GitPathObject $obj)
+  {
+    $nodes = $this->listRecursive(true);
+    $path = array_search($obj, $nodes, true);
+    return false === $path ? null : new GitPath($path);
+  }
+
+  /**
+   * @brief Recursively list the contents of a tree.
+   *
+   * @returns (array mapping string to GitPathObject) An array where the keys are
+   * paths relative to the current tree, and the values are GitPathObjects of
+   * the corresponding blobs in binary representation.
+   */
+  public function listRecursive($listDirs = false)
+  {
+    $r = array();
+
+    foreach ($this->nodes as $name => $node)
     {
-        return strcmp($a->name, $b->name);
-    }
-
-    public function _serialize()
-    {
-	$s = '';
-        /* git requires nodes to be sorted */
-        usort($this->nodes, array('GitTree', 'nodecmp'));
-	foreach ($this->nodes as $node)
-	    $s .= sprintf("%s %s\0%s", base_convert($node->mode, 10, 8), $node->name, $node->object);
-	return $s;
-    }
-
-    /**
-     * @brief Find the tree or blob at a certain path.
-     *
-     * @throws GitTreeInvalidPathError The path was found to be invalid. This
-     * can happen if you are trying to treat a file like a directory (i.e.
-     * @em foo/bar where @em foo is a file).
-     *
-     * @param $path (string) The path to look for, relative to this tree.
-     * @returns The GitTree or GitBlob at the specified path, or NULL if none
-     * could be found.
-     */
-    public function find($path)
-    {
-        if (!is_array($path))
-            $path = explode('/', $path);
-
-        while ($path && !$path[0])
-            array_shift($path);
-        if (!$path)
-            return $this->getName();
-
-        if (!isset($this->nodes[$path[0]]))
-            return NULL;
-        $cur = $this->nodes[$path[0]]->object;
-
-        array_shift($path);
-        while ($path && !$path[0])
-            array_shift($path);
-
-        if (!$path)
-            return $cur;
-        else
+      if ($node instanceof GitTree)
+      {
+        if ($listDirs)
         {
-            $cur = $this->repo->getObject($cur);
-            if (!($cur instanceof GitTree))
-                throw new GitTreeInvalidPathError;
-            return $cur->find($path);
+          $r[$name] = $node;  
         }
+        foreach ($node->listRecursive($listDirs) as $entry => $blob)
+        {
+          $r[$name . '/' . $entry] = $blob;
+        }
+      }
+      else
+      {
+        $r[$name] = $node;
+      }
     }
 
-    /**
-     * @brief Recursively list the contents of a tree.
-     *
-     * @returns (array mapping string to string) An array where the keys are
-     * paths relative to the current tree, and the values are SHA-1 names of
-     * the corresponding blobs in binary representation.
-     */
-    public function listRecursive()
+    return $r;
+  }
+
+  public function write()
+  {
+    if (!$this->exists)
     {
-        $r = array();
-
-        foreach ($this->nodes as $node)
-        {
-            if ($node->is_dir)
-            {
-                $subtree = $this->repo->getObject($node->object);
-                foreach ($subtree->listRecursive() as $entry => $blob)
-                    $r[$node->name . '/' . $entry] = $blob;
-            }
-            else
-                $r[$node->name] = $node->object;
-        }
-
-        return $r;
+      foreach ($this->data['nodes'] as $node)
+      {
+        $node->write();
+      }
     }
+    return parent::write();
+  }
+  
+  const TREEDIFF_A = 0x01;
+  const TREEDIFF_B = 0x02;
 
-    /**
-     * @brief Updates a node in this tree.
-     *
-     * Missing directories in the path will be created automatically.
-     *
-     * @param $path (string) Path to the node, relative to this tree.
-     * @param $mode Git mode to set the node to. 0 if the node shall be
-     * cleared, i.e. the tree or blob shall be removed from this path.
-     * @param $object (string) Binary SHA-1 hash of the object that shall be
-     * placed at the given path.
-     *
-     * @returns (array of GitObject) An array of GitObject%s that were newly
-     * created while updating the specified node. Those need to be written to
-     * the repository together with the modified tree.
-     */
-    public function updateNode($path, $mode, $object)
+  const TREEDIFF_REMOVED = self::TREEDIFF_A;
+  const TREEDIFF_ADDED = self::TREEDIFF_B;
+  const TREEDIFF_CHANGED = 0x03;
+
+  static public function treeDiff($a_tree, $b_tree)
+  {
+    $a_blobs = $a_tree ? $a_tree->listRecursive() : array();
+    $b_blobs = $b_tree ? $b_tree->listRecursive() : array();
+
+    $a_files = array_keys($a_blobs);
+    $b_files = array_keys($b_blobs);
+
+    $changes = array();
+
+    sort($a_files);
+    sort($b_files);
+    $a = $b = 0;
+    while ($a < count($a_files) || $b < count($b_files))
     {
-        if (!is_array($path))
-            $path = explode('/', $path);
-        $name = array_shift($path);
-        if (count($path) == 0)
-        {
-            /* create leaf node */
-            if ($mode)
-            {
-                $node = new stdClass;
-                $node->mode = $mode;
-                $node->name = $name;
-                $node->object = $object;
-                $node->is_dir = !!($mode & 040000);
+      if ($a < count($a_files) && $b < count($b_files))
+        $cmp = strcmp($a_files[$a], $b_files[$b]);
+      else
+        $cmp = 0;
+      if ($b >= count($b_files) || $cmp < 0)
+      {
+        $changes[$a_files[$a]] = self::TREEDIFF_REMOVED;
+        $a++;
+      }
+      else if ($a >= count($a_files) || $cmp > 0)
+      {
+        $changes[$b_files[$b]] = self::TREEDIFF_ADDED;
+        $b++;
+      }
+      else
+      {
+        if ($a_blobs[$a_files[$a]] != $b_blobs[$b_files[$b]])
+            $changes[$a_files[$a]] = self::TREEDIFF_CHANGED;
 
-                $this->nodes[$node->name] = $node;
-            }
-            else
-                unset($this->nodes[$name]);
-
-            return array();
-        }
-        else
-        {
-            /* descend one level */
-            if (isset($this->nodes[$name]))
-            {
-                $node = $this->nodes[$name];
-                if (!$node->is_dir)
-                    throw new GitTreeInvalidPathError;
-                $subtree = clone $this->repo->getObject($node->object);
-            }
-            else
-            {
-                /* create new tree */
-                $subtree = new GitTree($this->repo);
-
-                $node = new stdClass;
-                $node->mode = 040000;
-                $node->name = $name;
-                $node->is_dir = TRUE;
-
-                $this->nodes[$node->name] = $node;
-            }
-            $pending = $subtree->updateNode($path, $mode, $object);
-
-            $subtree->rehash();
-            $node->object = $subtree->getName();
-
-            $pending[] = $subtree;
-            return $pending;
-        }
+        $a++;
+        $b++;
+      }
     }
 
-    const TREEDIFF_A = 0x01;
-    const TREEDIFF_B = 0x02;
+    return $changes;
+  }
 
-    const TREEDIFF_REMOVED = self::TREEDIFF_A;
-    const TREEDIFF_ADDED = self::TREEDIFF_B;
-    const TREEDIFF_CHANGED = 0x03;
-
-    static public function treeDiff($a_tree, $b_tree)
+  /**
+   * Returns if the supplied path exists (implements the ArrayAccess interface)
+   *
+   * @param  string $path The relative path to the node
+   *
+   * @return bool true if the error exists, false otherwise
+   */
+  public function offsetExists($path)
+  {
+    $path = new GitPath($path);
+    
+    if ($path->isRoot())
     {
-        $a_blobs = $a_tree ? $a_tree->listRecursive() : array();
-        $b_blobs = $b_tree ? $b_tree->listRecursive() : array();
-
-        $a_files = array_keys($a_blobs);
-        $b_files = array_keys($b_blobs);
-
-        $changes = array();
-
-        sort($a_files);
-        sort($b_files);
-        $a = $b = 0;
-        while ($a < count($a_files) || $b < count($b_files))
-        {
-            if ($a < count($a_files) && $b < count($b_files))
-                $cmp = strcmp($a_files[$a], $b_files[$b]);
-            else
-                $cmp = 0;
-            if ($b >= count($b_files) || $cmp < 0)
-            {
-                $changes[$a_files[$a]] = self::TREEDIFF_REMOVED;
-                $a++;
-            }
-            else if ($a >= count($a_files) || $cmp > 0)
-            {
-                $changes[$b_files[$b]] = self::TREEDIFF_ADDED;
-                $b++;
-            }
-            else
-            {
-                if ($a_blobs[$a_files[$a]] != $b_blobs[$b_files[$b]])
-                    $changes[$a_files[$a]] = self::TREEDIFF_CHANGED;
-
-                $a++;
-                $b++;
-            }
-        }
-
-        return $changes;
+      // it's this object, so it exists!
+      return true;
     }
+    
+    // check if the first element exists
+    $exists = isset($this->data['nodes'][$path[0]]);
+    
+    if ($exists && !$path->isSingle())
+    {
+      // this is a path with subdirectories, 
+      $sub = $this->data['nodes'][$path[0]];
+      $exists &= ($sub instanceof GitTree) && $sub->offsetExists((string)$path->getShift());
+    }
+    
+    return $exists;
+  }
+
+  /**
+   * Returns the node associated with the supplied path (implements the ArrayAccess interface).
+   *
+   * @param  GitPath $path  The path of the object to get
+   *
+   * @return object at the path, or null if the object does not exist
+   */
+  public function offsetGet($path)
+  {
+    $path = new GitPath($path);
+    
+    if ($path->isRoot())
+    {
+      return $this;
+    }
+    
+    $object = null;
+    if (isset($this->nodes[$path[0]]))
+    {
+      $object = $this->nodes[$path[0]];
+    }  
+    
+    if (is_null($object) || $path->isSingle())
+    {
+      
+      return $object;
+    }
+
+    if (!$object instanceof GitTree)
+    {
+      throw new Exception(sprintf('Invalid path supplied: \'%s\', object is of class %s',(string)$path, get_class($object)));
+    }
+    
+    return $object[$path->getShift()];
+  }
+
+  /**
+   * Sets the path to object (implements the ArrayAccess interface).
+   *
+   * @param string $path
+   * @param string $object
+   *
+   */
+  public function offsetSet($path, $object)
+  {
+    $path = new GitPath($path);
+    
+    if (!$object instanceof GitBlob)
+    {
+      throw new Exception('Object should be a GitBlob');
+    }
+    
+    if ($this->isReadOnly())
+    {
+      throw new Exception('Can not write to locked object');
+    }
+    
+    if ($path->isRoot())
+    {
+      throw new Exception('Can not set self to another object');
+    }
+    
+    if ($path->isSingle())
+    {
+      $beSureDataIsLoaded = $this->nodes;
+      $this->data['nodes'][$path[0]] = $object;
+    }
+    else
+    {
+      if (isset($this->nodes[$path[0]]))
+      {
+        $sub = $this->nodes[$path[0]];
+        if ($sub->isReadOnly())
+        {
+          // clone the loaded object, to make it a new one
+          $sub = clone $sub;
+        }
+      }
+      else
+      {
+        $sub = new GitTree($this->git);
+      }
+      
+      if (!$sub instanceof GitTree)
+      {
+        throw new Exception('Invalid path to set');
+      }
+      
+      $this->data['nodes'][$path[0]] = $sub;
+      
+      $sub->offsetSet($path->getShift(), $object);
+    }
+  }
+
+  /**
+   * Removes the node from the path recursively
+   *
+   * @param string $path
+   */
+  public function offsetUnset($path)
+  {
+    $path = new GitPath($path);
+    
+    if ($this->isReadOnly())
+    {
+      throw new Exception('Can not write to locked object');
+    }
+    
+    if (!$path->isSingle() && isset($this->nodes[$path[0]]))
+    {
+      $sub = $this->nodes[$path[0]];
+      if (!$sub instanceof GitTree)
+      {
+        throw new Exception('Invalid path');
+      }
+      $sub->offsetUnset($path->getShift());
+    }
+    
+    if ($path->isRoot())
+    {
+      throw new Exception('Can not unset self');
+    }
+    
+    unset($this->data['nodes'][$path[0]]);
+  }
+
+  /**
+   * implements iterator interface
+   *
+   * @return void
+   * @author The Young Shepherd
+   **/
+  public function getIterator() {
+    return new ArrayIterator($this->data['nodes']);
+  }
+
+  /**
+   * implements countable interface
+   *
+   * @return void
+   * @author The Young Shepherd
+   **/
+  public function count()
+  {
+    return count($this->data['nodes']);
+  }
 }
-

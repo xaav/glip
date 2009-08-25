@@ -4,7 +4,7 @@
  * Utility functions for dealing with binary files/strings.
  * All functions assume network byte order (big-endian).
  *
- * Copyright (C) 2008, 2009 Patrik Fimml
+ * Copyright (C) 2008, 2009 Patrik Fimml, Sjoerd de Jong
  *
  * This file is part of glip.
  *
@@ -58,4 +58,3 @@ final class Binary
         return $r;
     }
 }
-
