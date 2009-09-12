@@ -87,10 +87,17 @@ class GitPath implements ArrayAccess, Iterator, Countable
     } 
   }
   
-  public function getShift()
+  public function getShifted()
   {
     $dir = $this->parts;
     array_shift($dir);
+    return new GitPath($dir);
+  }
+  
+  public function getPopped()
+  {
+    $dir = $this->parts;
+    array_pop($dir);
     return new GitPath($dir);
   }
   

@@ -33,14 +33,14 @@ class SHA
       if (is_numeric("0x".$sha) && strlen($sha) == 40)
       {
         // hex sha value
-        $this->bin = pack('H40', $sha);
+        $this->bin = (string)pack('H40', $sha);
       }
       else
       {
         $hex = bin2hex($sha);
         if (is_numeric("0x".$hex) && strlen($hex) == 40)
         {
-          $this->bin = $sha;
+          $this->bin = (string)$sha;
         }
         else
         {
@@ -52,12 +52,17 @@ class SHA
   
   public function fromData($data)
   {
-    $this->bin = self::hash($data);
+    $this->bin = (string)self::hash($data);
   }
   
-  public function h()
+  public function h($count = null)
   {
-    return $this->hex();
+    return is_null($count) ? $this->hex() : substr($this->hex(),0,$count);
+  }
+  
+  public function b64()
+  {
+    return base64_encode($this->bin());
   }
   
   public function b()

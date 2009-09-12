@@ -74,12 +74,19 @@ class GitBranch implements ArrayAccess
    * @return void
    * @author The Young Shepherd
    **/
-  public function clearStash()
+  public function clearStash($key = null)
   {
-    //clear the stash, don't assign it to an empty array as it might be a pointer inside an external store
-    foreach (array_keys($this->stash) as $key)
+    if (is_null($key))
     {
-      unset($this->stash[$key]);
+      //clear the stash, don't assign it to an empty array as it might be a pointer inside an external store
+      foreach (array_keys($this->stash) as $key)
+      {
+        unset($this->stash[$key]);
+      }
+    }
+    else
+    {
+      unset($this->stash[(string)$key]);
     }
   }
 
@@ -100,7 +107,7 @@ class GitBranch implements ArrayAccess
    * @param GitStamp $stamp Stamp for the author&committer of this commit
    * @param string $message Summary for this commit
    *
-   * @return void
+   * @return GitCommit The new commit tip
    * @author The Young Shepherd
    **/
   public function commit(GitCommitStamp $stamp, $message)
@@ -131,6 +138,7 @@ class GitBranch implements ArrayAccess
     $this->updateTipTo($commit);
     
     $this->clearStash();
+    return $commit;
   }
 
   /**
@@ -138,9 +146,9 @@ class GitBranch implements ArrayAccess
    *
    * @returns (GitCommit) The tip of the branch
    */
-  public function getTip()
+  public function getTip($noCache = false)
   {
-    if (!is_null($this->tipCache))
+    if (!is_null($this->tipCache) && !$noCache)
     {
       return $this->tipCache;
     } 
@@ -206,7 +214,7 @@ class GitBranch implements ArrayAccess
     $commit->write();    
     ftruncate($fBranch, 0);
     fwrite($fBranch, $commit->getSha()->hex());
-    fclose($this->fBranch);
+    fclose($fBranch);
     $this->tipCache = $commit;
   }
   
@@ -241,6 +249,7 @@ class GitBranch implements ArrayAccess
    */
   public function offsetExists($path)
   {
+    $path = new GitPath($path);
     return isset($this->stash[(string)$path]) || 
       ($this->getTip()->offsetExists($path) && !array_key_exists((string)$path, $this->stash));
   }
@@ -254,35 +263,42 @@ class GitBranch implements ArrayAccess
    */
   public function offsetGet($path)
   {
+    $path = new GitPath($path);
     $object = array_key_exists((string)$path,$this->stash)
       ? new GitBlob($this->git, null, null, $this->stash[(string)$path])
       : $this->getTip()->offsetGet($path);
-        
     if (is_null($object) || $object instanceof GitTree)
     {
-      if (is_null($object))
-      {
-        $object = new GitTree($this->git);
-      }
-      elseif ($object instanceof GitTree)
-      {
-        $object = clone $object;
-      }
-
-      //make sure it's a cleaned reference
-      $path = new GitPath($path);
+      //make sure it's a cleaned reference, and that it's referencing a path
+      $path = new GitPath($path.'/');
       $path = $path->getTreePart();
-            
+                
       foreach (array_keys($this->stash) as $key)
       {
         $file = new GitPath($key);
-        if ((string)$file->getTreePart() == $path)
+        if ($file->getTreePart() === $path)
         {
-          $object[$file->getBlobPart()] = new GitBlob($this->git, null, null, $this->stash[$key]);
+          if (is_null($object))
+          {
+            $object = new GitTree($this->git);
+          }
+          elseif ($object->isReadOnly())
+          {
+            $object = clone $object;
+          }
+          
+          if (is_null($this->stash[$key]))
+          {
+            unset($object[$file->getBlobPart()]);
+          }
+          else
+          {
+            $object[$file->getBlobPart()] = new GitBlob($this->git, null, null, $this->stash[$key]);
+          }        
         }
       }
     }
-    return count($object) > 0 ? $object : null;
+    return $object;
   }
 
   /**
@@ -294,6 +310,7 @@ class GitBranch implements ArrayAccess
    */
   public function offsetSet($path, $data)
   {
+    $path = new GitPath($path);
     $this->stash[(string)$path] = $data;
   }
 
@@ -304,14 +321,14 @@ class GitBranch implements ArrayAccess
    */
   public function offsetUnset($path)
   {
-    if ($this->getTip()->offsetExists($path))
+    $path = new GitPath($path);
+    if ($this->getTip()->offsetExists((string)$path))
     {
-      $this->stash[(string)$path] = null;
+     $this->stash[(string)$path] = null;
     }
     else
     {
       unset($this->stash[(string)$path]);
-    }
-    
+    }    
   }
 }

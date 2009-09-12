@@ -30,6 +30,15 @@ abstract class GitPathObject extends GitObject
     return $this->mode;
   }
   
+  public function setMode($mode)
+  {
+    if ($this->isReadOnly())
+    {
+      throw new Exception('cannot set mode on a locked object');
+    }
+    $this->mode = $mode;
+  }
+  
   /**
    * Constructor, sets mode of this object
    *

@@ -193,6 +193,14 @@ class GitCommit extends GitObject implements ArrayAccess
    **/
   public function write()
   {
+    if (is_null($this->author))
+    {
+      $this->author = new GitCommitStamp();
+    }
+    if (is_null($this->committer))
+    {
+      $this->committer = new GitCommitStamp();
+    }
     if (!$this->exists())
     {
       $this->data['tree']->write();
@@ -248,6 +256,12 @@ class GitCommit extends GitObject implements ArrayAccess
    */
   public function offsetSet($path, $object)
   {
+    if (!$object instanceof GitBlob)
+    {
+      $blob = new GitBlob($this->git);
+      $blob->data = (string)$object;
+      $object = $blob;
+    }
     $this->tree->offsetSet($path, $object);
   }
 

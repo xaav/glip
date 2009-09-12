@@ -348,7 +348,8 @@ class Git implements ArrayAccess
     }
     else if ($type == Git::OBJ_REF_DELTA)
     {
-      $base_name = fread($pack, 20);
+      //TODO the following line is untested
+      $base_name = new SHA(fread($pack, 20));
       list($type, $base) = $this->getRawObject($base_name);
 
       // $size is the length of the uncompressed delta

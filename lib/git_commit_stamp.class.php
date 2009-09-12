@@ -38,7 +38,7 @@ class GitCommitStamp
     }
     if (empty($email))
     {
-      $this->email = "anonymous@".$_SERVER['REMOTE_ADDR'];
+      $this->email = "anonymous@".(isset($_SERVER) && isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : "unknown");
     } 
     else
     {

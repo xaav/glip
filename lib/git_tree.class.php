@@ -54,11 +54,6 @@ class GitTree extends GitPathObject implements ArrayAccess, IteratorAggregate, C
     unset($data);
   }
 
-  protected static function nodecmp(&$a, &$b)
-  {
-    return strcmp($a->getSha(), $b->getSha());
-  }
-
   /**
    * serialize serializes all objects
    * it calls ->getSha() on all nodes, which will also lock all the subnodes recursively
@@ -71,8 +66,22 @@ class GitTree extends GitPathObject implements ArrayAccess, IteratorAggregate, C
     $s = '';
     
     /* git requires nodes to be sorted */
-    $this->nodes;  // not a no-op, it makes sure this object is loaded
-    uasort($this->data['nodes'], array('GitTree', 'nodecmp'));
+    $trees = array();
+    $blobs = array();
+    foreach ($this->nodes as $path => $node)
+    {
+      if ($node instanceof GitTree)
+      {
+        $trees[$path] = $node;
+      }
+      else
+      {
+        $blobs[$path] = $node;
+      }
+    }
+    ksort($trees);
+    ksort($blobs);
+    $this->data['nodes'] = array_merge($trees, $blobs);
     
     foreach ($this->nodes as $name => $node)
     {
@@ -209,15 +218,15 @@ class GitTree extends GitPathObject implements ArrayAccess, IteratorAggregate, C
       // it's this object, so it exists!
       return true;
     }
-    
+
     // check if the first element exists
-    $exists = isset($this->data['nodes'][$path[0]]);
-    
+    $exists = isset($this->nodes[$path[0]]);
+
     if ($exists && !$path->isSingle())
     {
       // this is a path with subdirectories, 
-      $sub = $this->data['nodes'][$path[0]];
-      $exists &= ($sub instanceof GitTree) && $sub->offsetExists((string)$path->getShift());
+      $sub = $this->nodes[$path[0]];
+      $exists &= ($sub instanceof GitTree) && $sub->offsetExists((string)$path->getShifted());
     }
     
     return $exists;
@@ -256,7 +265,7 @@ class GitTree extends GitPathObject implements ArrayAccess, IteratorAggregate, C
       throw new Exception(sprintf('Invalid path supplied: \'%s\', object is of class %s',(string)$path, get_class($object)));
     }
     
-    return $object[$path->getShift()];
+    return $object[$path->getShifted()];
   }
 
   /**
@@ -313,7 +322,7 @@ class GitTree extends GitPathObject implements ArrayAccess, IteratorAggregate, C
       
       $this->data['nodes'][$path[0]] = $sub;
       
-      $sub->offsetSet($path->getShift(), $object);
+      $sub->offsetSet($path->getShifted(), $object);
     }
   }
 
@@ -338,7 +347,12 @@ class GitTree extends GitPathObject implements ArrayAccess, IteratorAggregate, C
       {
         throw new Exception('Invalid path');
       }
-      $sub->offsetUnset($path->getShift());
+      if ($sub->isReadOnly())
+      {
+        $sub = clone $sub;
+        $this->data['nodes'][$path[0]] = $sub;
+      }
+      $sub->offsetUnset($path->getShifted());
     }
     
     if ($path->isRoot())
@@ -346,7 +360,10 @@ class GitTree extends GitPathObject implements ArrayAccess, IteratorAggregate, C
       throw new Exception('Can not unset self');
     }
     
-    unset($this->data['nodes'][$path[0]]);
+    if ($path->isSingle() || count($this->data['nodes'][$path[0]]) == 0)
+    {
+      unset($this->data['nodes'][$path[0]]);
+    }
   }
 
   /**
@@ -356,6 +373,7 @@ class GitTree extends GitPathObject implements ArrayAccess, IteratorAggregate, C
    * @author The Young Shepherd
    **/
   public function getIterator() {
+    $beSureDataIsLoaded = $this->nodes;
     return new ArrayIterator($this->data['nodes']);
   }
 
@@ -367,6 +385,6 @@ class GitTree extends GitPathObject implements ArrayAccess, IteratorAggregate, C
    **/
   public function count()
   {
-    return count($this->data['nodes']);
+    return count($this->nodes);
   }
 }
