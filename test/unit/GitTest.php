@@ -198,3 +198,35 @@ $blob = $branch['newdir/subdir/file'];
 $t->is($blob->data, 'test',
   'Reading data from a compacted blob works');
 
+// ============================================================================================
+
+$t->comment('Test stash behaviour of a branch');
+$branch = $git['master'];
+$branch['test1'] = 'newValue';
+$t->is($branch['test1']->data, 'newValue',
+  'Reading objects from the branch returns the object in stash');
+$t->is($branch->getTip(true)->tree['test1']->data, 'data1',
+  'The tip of the branch still points to the old data');
+$branch->commit(new GitCommitStamp(),'testing stash behaviour');
+$t->is($branch->getTip(true)->tree['test1']->data, 'newValue',
+  'After committing the tip contains the new value');
+
+$branch['newstashdir/file'] = 'value';
+$t->ok(is_null($branch->getTip()->tree['newstashdir']),
+  'GitTree does not exist in repository');
+$t->isa_ok($branch['newstashdir'], 'GitTree',
+  'Branches create non existing GitTree from contents in their stash');
+$t->is(count($branch['newstashdir']), 1,
+  'Just 1 file inside the GitTree');
+  
+$found = false;
+foreach ($branch['/'] as $path => $obj)
+{
+  if ($path == 'newstashdir')
+  {
+    $found = true;
+    break;
+  }
+}
+$t->ok($found,
+  'The new tree is a child in the parent tree');

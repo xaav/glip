@@ -117,6 +117,20 @@ class GitPath implements ArrayAccess, Iterator, Countable
       return "";
     }    
   }
+
+  public function getParts()
+  {
+    return $this->parts;
+  }
+
+  public function hasAncestor(GitPath $path)
+  {
+    if ($path->refBlob() || count($path) >= $this->count())
+    {
+      return false;
+    }
+    return count(array_intersect_assoc($this->parts, $path->getParts())) == count($path);
+  }
   
   public function __toString()
   {
@@ -246,11 +260,27 @@ class GitPath implements ArrayAccess, Iterator, Countable
   }
 
   /**
-   * Ignored because not allowed to manipulate this way
+   * splice applies the splice function to remove parts of the path
+   *
+   * @return void
+   **/
+  public function splice($index, $count = 1)
+  {
+    if ($index + $count >= $this->count() || (($index < 0) && ($index + $count >= 0)))
+    {
+      // the blobpart is removed, so it must become a tree
+      $this->refTree = true;
+    }
+    array_splice($this->parts, $index, $count);
+  }
+
+  /**
+   * Removes one part of the path as defined by index
    *
    * @param int $index
    */
   public function offsetUnset($index)
   {
+    $this->splice($index);
   }
 }

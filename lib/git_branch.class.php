@@ -271,13 +271,15 @@ class GitBranch implements ArrayAccess
     {
       //make sure it's a cleaned reference, and that it's referencing a path
       $path = new GitPath($path.'/');
-      $path = $path->getTreePart();
                 
       foreach (array_keys($this->stash) as $key)
       {
         $file = new GitPath($key);
-        if ($file->getTreePart() === $path)
+        if ($file->hasAncestor($path))
         {
+          //remove $path part of the stash item
+          $file->splice(0, count($path));
+          
           if (is_null($object))
           {
             $object = new GitTree($this->git);
@@ -289,11 +291,11 @@ class GitBranch implements ArrayAccess
           
           if (is_null($this->stash[$key]))
           {
-            unset($object[$file->getBlobPart()]);
+            unset($object[$file]);
           }
           else
           {
-            $object[$file->getBlobPart()] = new GitBlob($this->git, null, null, $this->stash[$key]);
+            $object[$file] = new GitBlob($this->git, null, null, $this->stash[$key]);
           }        
         }
       }
