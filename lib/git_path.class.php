@@ -26,13 +26,16 @@ class GitPath implements ArrayAccess, Iterator, Countable
   protected
     $parts = array(),
     $partsCount = 0,
-    $refTree = false;
+    $refTree = false,
+    $delimiter = null;
     
-  function __construct($arg)
+  function __construct($arg, $delimiter = '/')
   {
+    $this->delimiter = $delimiter;
+    
     if (!is_array($arg))
     {
-      $arg = explode('/',(string)$arg);
+      $arg = explode($this->delimiter,(string)$arg);
     }
     
     if (count($arg) == 0)
@@ -114,8 +117,15 @@ class GitPath implements ArrayAccess, Iterator, Countable
     } 
     else
     {
-      return "";
+      return '';
     }    
+  }
+  
+  public function getBlobExtension($delimiter = '.')
+  {
+    $blob = $this->getBlobPart();
+    $parts = explode($delimiter, $blob);
+    return count($parts)>1 ? $parts[count($parts)-1] : '';
   }
 
   public function getParts()
@@ -134,7 +144,7 @@ class GitPath implements ArrayAccess, Iterator, Countable
   
   public function __toString()
   {
-    return implode('/',$this->parts).($this->refTree()?'/':'');
+    return implode($this->delimiter,$this->parts).($this->refTree()?$this->delimiter:'');
   }
 
   /**

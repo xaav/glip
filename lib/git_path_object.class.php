@@ -65,32 +65,17 @@ abstract class GitPathObject extends GitObject
     $r = array();
     $commits = $commitTip->getHistory();
     $path = $commitTip->getPath($this);
+    $last = null;
     foreach ($commits as $commit)
     {
-      $common = FALSE;
+      $sha = (string)$commit[$path];
       foreach ($commit->parents as $parent)
       {
-        $blob = $parent[$path];
-        if ($common === FALSE)
+        if ($sha!==(string)$parent[$path])
         {
-          $common = $blob;
-        }
-        else if ($blob !== $common)
-        {
-          $common = TRUE;
+          $r[] = $commit;
           break;
         }
-      }
-      
-      if ($common === FALSE)
-      {
-        $common = NULL;      
-      }
-  
-      $blob = $commit[$path];
-      if ($common !== $blob)
-      {
-        $r[] = $commit;
       }
     }
     return $r;
