@@ -29,7 +29,7 @@ require_once('git_commit_stamp.class.php');
  * @package default
  * @author The Young Shepherd
  **/
-class GitCommit extends GitObject implements ArrayAccess
+class GitCommit extends GitObject implements ArrayAccess, IteratorAggregate, Countable
 {
   protected
     $data = array(
@@ -273,5 +273,26 @@ class GitCommit extends GitObject implements ArrayAccess
   public function offsetUnset($path)
   {
     $this->tree->offsetUnset($path);
+  }
+
+  /**
+   * implements iterator interface
+   *
+   * @return void
+   * @author The Young Shepherd
+   **/
+  public function getIterator() {
+    return $this->tree->getIterator();
+  }
+
+  /**
+   * implements countable interface
+   *
+   * @return void
+   * @author The Young Shepherd
+   **/
+  public function count()
+  {
+    return $this->tree->count();
   }
 }

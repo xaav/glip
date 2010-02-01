@@ -68,7 +68,7 @@ abstract class GitObject implements Serializable
   {
     if (!is_null($this->serialized))
     {
-      throw new Exception("Can only set serialization on an uncomputed not loaded object");
+      throw new Exception("Can only set serialization on an uncomputed, not loaded object");
     }
     $this->serialized = $serialized;
   }
@@ -177,7 +177,7 @@ abstract class GitObject implements Serializable
    */
   public function getTypeId()
   {
-    return Git::getTypeId($this->getTypeName);
+    return Git::getTypeId($this->getTypeName());
   }
     
   /**
