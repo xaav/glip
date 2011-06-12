@@ -18,17 +18,6 @@
  * along with glip.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once("binary.class.php");
-require_once("git_blob.class.php");
-require_once("git_branch.class.php");
-require_once("git_commit.class.php");
-require_once("git_commit_stamp.class.php");
-require_once("git_object.class.php");
-require_once("git_path.class.php");
-require_once("git_path_object.class.php");
-require_once("git_tree.class.php");
-require_once("sha.class.php");
-
 class Git implements ArrayAccess
 {
   protected
@@ -36,7 +25,7 @@ class Git implements ArrayAccess
     $packs = array(),   // (array of SHA) all packs in the repository
     $branchCache = array(), // (array of GitBranch) cache for branches
     $stash = array();   // (array of data strings) cache for stash for branches
-  
+
   const
     OBJ_NONE      = 0,
     OBJ_COMMIT    = 1,
@@ -106,7 +95,7 @@ class Git implements ArrayAccess
   public function __construct($dir, &$stashSource = null, $stashKey = 'git_stash')
   {
     $this->dir = $dir;
-    
+
     if (is_array($stashSource))
     {
       if (isset($stashSource[$stashKey]))
@@ -384,31 +373,31 @@ class Git implements ArrayAccess
   {
     static $cache = array();
     /* FIXME allow limiting the cache to a certain size */
-    
+
     if (!isset($cache[(string)$sha]))
     {
       $path = sprintf('%s/objects/%s/%s', $this->dir, substr($sha->hex(), 0, 2), substr($sha->hex(), 2));
-      
+
       if (file_exists($path))
       {
         list($hdr, $object_data) = explode("\0", gzuncompress(file_get_contents($path)), 2);
         sscanf($hdr, "%s %d", $type, $object_size);
-        
+
         $cache[(string)$sha] = array($type, $object_data);
       }
       else if ($x = $this->findPackedObject($sha))
       {
         list($pack_sha, $object_offset) = $x;
-        
+
         $pack = fopen(sprintf('%s/objects/pack/pack-%s.pack', $this->dir, $pack_sha->hex()), 'rb');
         flock($pack, LOCK_SH);
-        
+
         /* check magic and version */
         $magic = fread($pack, 4);
         $version = Binary::fuint32($pack);
         if ($magic != 'PACK' || $version != 2)
           throw new Exception('unsupported pack format');
-        
+
         $cache[(string)$sha] = $this->unpackObject($pack, $object_offset);
         fclose($pack);
       }
@@ -417,7 +406,7 @@ class Git implements ArrayAccess
         throw new Exception(sprintf('object not found: %s', $sha->hex()));
       }
     }
-    
+
     return $cache[(string)$sha];
   }
 

@@ -18,6 +18,10 @@
  * along with glip.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-$old_include_path = set_include_path(dirname(__FILE__));
-require_once('git.class.php');
-set_include_path($old_include_path);
+namespace Glip;
+
+function autoload($class)
+{
+    require __DIR__.'/'.$class.'.php';
+}
+spl_autoload_register('Glip\autoload');

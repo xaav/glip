@@ -18,8 +18,6 @@
  * along with glip.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once('git_path_object.class.php');
-
 class GitBlob extends GitPathObject
 {
   protected
