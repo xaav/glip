@@ -18,9 +18,6 @@
  * along with glip.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-class GitTreeError extends Exception {}
-class GitTreeInvalidPathError extends GitTreeError {}
-
 namespace Glip;
 
 class GitTree extends GitPathObject implements ArrayAccess, IteratorAggregate, Countable
