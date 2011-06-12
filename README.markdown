@@ -11,4 +11,27 @@ glip was split off eWiki on May 31, 2009. An attempt was made to preserve
 commit history by using git filter-branch; this also means that commit
 messages before May 31, 2009 may seem weird (esp. wrt file names).
 
+## Usage ##
+
+Include the autoload file, as shown below:
+
+```php5
+<?php
+
+require_once __DIR__.'lib/autoload.php';
+
+```
+
+Create a new Git repository:
+
+```php5
+<?php
+
+use Glip\Git
+
+$repo = new Git('project/.git');
+
+```
+
+
 ***Anyone who wants to contribute to this project is more than welcome to send a pull request***
