@@ -11,4 +11,4 @@ glip was split off eWiki on May 31, 2009. An attempt was made to preserve
 commit history by using git filter-branch; this also means that commit
 messages before May 31, 2009 may seem weird (esp. wrt file names).
 
-***Anyone who wants to contribute it more than welcome to send a pull request***
+***Anyone who wants to contribute to this project is more than welcome to send a pull request***
