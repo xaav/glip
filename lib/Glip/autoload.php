@@ -18,10 +18,11 @@
  * along with glip.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace Glip;
-
-function autoload($class)
+spl_autoload_register(function($class)
 {
-    require __DIR__.'/'.$class.'.php';
-}
-spl_autoload_register('Glip\autoload');
+    $file = __DIR__.'/'.strtr($class, '\\', '/').'.php';
+    if (file_exists($file)) {
+        require $file;
+        return true;
+    }
+});
