@@ -18,6 +18,8 @@
  * along with glip.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+namespace Glip;
+
 /**
 * GitPath regulates all paths in glip
 */
@@ -28,16 +30,16 @@ class GitPath implements ArrayAccess, Iterator, Countable
     $partsCount = 0,
     $refTree = false,
     $delimiter = null;
-    
+
   function __construct($arg, $delimiter = '/')
   {
     $this->delimiter = $delimiter;
-    
+
     if (!is_array($arg))
     {
       $arg = explode($this->delimiter,(string)$arg);
     }
-    
+
     if (count($arg) == 0)
     {
       // assume a reference to root
@@ -57,7 +59,7 @@ class GitPath implements ArrayAccess, Iterator, Countable
           $this->refTree = true;
         }
       }
-    }    
+    }
   }
 
   public function isSingle()
@@ -74,53 +76,53 @@ class GitPath implements ArrayAccess, Iterator, Countable
   {
     return $this->refTree;
   }
-  
+
   public function getTreePart()
   {
     if ($this->refTree())
     {
       return (string) $this;
-    } 
+    }
     else
     {
       $dir = $this->parts;
       array_pop($dir);
       array_push($dir, '');
       return (string) new GitPath($dir);
-    } 
+    }
   }
-  
+
   public function getShifted()
   {
     $dir = $this->parts;
     array_shift($dir);
     return new GitPath($dir);
   }
-  
+
   public function getPopped()
   {
     $dir = $this->parts;
     array_pop($dir);
     return new GitPath($dir);
   }
-  
+
   public function refBlob()
   {
     return !$this->refTree();
   }
-  
+
   public function getBlobPart()
   {
     if ($this->refBlob())
     {
       return $this[-1];
-    } 
+    }
     else
     {
       return '';
-    }    
+    }
   }
-  
+
   public function getBlobExtension($delimiter = '.')
   {
     $blob = $this->getBlobPart();
@@ -141,7 +143,7 @@ class GitPath implements ArrayAccess, Iterator, Countable
     }
     return count(array_intersect_assoc($this->parts, $path->getParts())) == count($path);
   }
-  
+
   public function __toString()
   {
     return implode($this->delimiter,$this->parts).($this->refTree()?$this->delimiter:'');
@@ -162,8 +164,8 @@ class GitPath implements ArrayAccess, Iterator, Countable
    */
   public function rewind()
   {
-    reset($this->parts); 
-    $this->partsCount = count($this->parts); 
+    reset($this->parts);
+    $this->partsCount = count($this->parts);
   }
 
   /**
@@ -173,7 +175,7 @@ class GitPath implements ArrayAccess, Iterator, Countable
    */
   public function key()
   {
-    return key($this->parts); 
+    return key($this->parts);
   }
 
   /**
@@ -183,7 +185,7 @@ class GitPath implements ArrayAccess, Iterator, Countable
    */
   public function current()
   {
-    return current($this->parts); 
+    return current($this->parts);
   }
 
   /**
@@ -191,8 +193,8 @@ class GitPath implements ArrayAccess, Iterator, Countable
    */
   public function next()
   {
-    next($this->parts); 
-    --$this->partsCount; 
+    next($this->parts);
+    --$this->partsCount;
   }
 
   /**
@@ -216,13 +218,13 @@ class GitPath implements ArrayAccess, Iterator, Countable
   {
     if (count($this->parts) == 0)
     {
-      $index = 0;  
+      $index = 0;
     }
     while ($index<0)
     {
       $index += count($this->parts);
-    } 
-    return isset($this->parts[$index]); 
+    }
+    return isset($this->parts[$index]);
   }
 
   /**
@@ -236,13 +238,13 @@ class GitPath implements ArrayAccess, Iterator, Countable
   {
     if (count($this->parts) == 0)
     {
-      $index = 0;  
+      $index = 0;
     }
     while ($index<0)
     {
       $index += count($this->parts);
-    } 
-    return isset($this->parts[$index]) ? $this->parts[$index] : null; 
+    }
+    return isset($this->parts[$index]) ? $this->parts[$index] : null;
   }
 
   /**
@@ -256,7 +258,7 @@ class GitPath implements ArrayAccess, Iterator, Countable
   {
     if (count($this->parts) == 0)
     {
-      $index = 0;  
+      $index = 0;
     }
     while ($index<0)
     {

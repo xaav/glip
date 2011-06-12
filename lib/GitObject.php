@@ -18,6 +18,8 @@
  * along with glip.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+namespace Glip;
+
 abstract class GitObject implements Serializable
 {
   protected
@@ -63,7 +65,7 @@ abstract class GitObject implements Serializable
     $this->exists = false;
     $this->serialized = null;
   }
-  
+
   public function setSerialized($serialized)
   {
     if (!is_null($this->serialized))
@@ -77,7 +79,7 @@ abstract class GitObject implements Serializable
   {
     return $this->git;
   }
-    
+
   public function isReadOnly()
   {
     return !is_null($this->sha);
@@ -97,7 +99,7 @@ abstract class GitObject implements Serializable
     }
     return $this->sha;
   }
-  
+
   public function isLoaded()
   {
     return $this->isLoaded;
@@ -107,7 +109,7 @@ abstract class GitObject implements Serializable
   {
     return $this->exists;
   }
-    
+
   public function load()
   {
     if (!$this->exists())
@@ -118,29 +120,29 @@ abstract class GitObject implements Serializable
     if (is_null($this->serialized))
     {
       list($type, $this->serialized) = $this->git->getRawObject($this->getSha());
-  
+
       if ($type !== $this->getTypeName())
       {
         throw new Exception('Error loading data of type \''.$type.'\' into object of type \''.$this->getTypeName().'\'');
       }
-    }   
-    
+    }
+
     $this->unserialize($this->serialized);
     $this->isLoaded = true;
   }
-  
+
   public function __set($name, $value)
   {
     if ($this->isReadOnly())
     {
       throw new Exception("Cannot set properties on a locked object");
     }
-    
+
     if (!in_array($name, array_keys($this->data)))
     {
       throw new Exception("$name is not a settable property of object ".get_class($this));
     }
-        
+
     $this->data[$name] = $value;
   }
 
@@ -155,10 +157,10 @@ abstract class GitObject implements Serializable
     {
       throw new Exception("$name is not a gettable property of object ".get_class($this));
     }
-    
+
     return isset($this->data[$name]) ? $this->data[$name] : null;
   }
-  
+
   /**
    * get the objects type name, either 'blob', 'tree', or 'commit'
    *
@@ -169,7 +171,7 @@ abstract class GitObject implements Serializable
   {
     return strtolower(substr(get_class($this),3));
   }
-  
+
   /**
    * Get the object's type number
    *
@@ -179,7 +181,7 @@ abstract class GitObject implements Serializable
   {
     return Git::getTypeId($this->getTypeName());
   }
-    
+
   /**
    * @brief Get the string representation of an object.
    *
@@ -190,7 +192,7 @@ abstract class GitObject implements Serializable
   {
     if (is_null($this->serialized))
     {
-      $this->serialized = $this->_serialize();      
+      $this->serialized = $this->_serialize();
     }
     return $this->serialized;
   }
@@ -232,20 +234,20 @@ abstract class GitObject implements Serializable
     {
       return true;
     }
-    
+
     $sha1 = $this->getSha()->hex();
     $path = sprintf('%s/objects/%s/%s', $this->git->getDir(), substr($sha1, 0, 2), substr($sha1, 2));
-    
+
     if (file_exists($path))
     {
       return false;
     }
-      
+
     if (!is_dir(dirname($path)))
     {
       mkdir(dirname($path), 0770);
     }
-      
+
     $f = fopen($path, 'ab');
     flock($f, LOCK_EX);
     ftruncate($f, 0);
@@ -257,7 +259,7 @@ abstract class GitObject implements Serializable
     $this->exists = true;
     return TRUE;
   }
-    
+
   /**
    * equalTo compares this object to one or an array of other objects. If all
    * objects are the same it returns true
@@ -275,10 +277,10 @@ abstract class GitObject implements Serializable
         $allEqual &= $this->equalTo($obj);
       }
       return $allEqual;
-    } 
+    }
     else
     {
       return $object instanceof GitObject && $object->getSha()->hex() === $this->getSha()->hex();
-    }      
+    }
   }
 }

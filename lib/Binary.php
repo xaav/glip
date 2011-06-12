@@ -22,6 +22,8 @@
  * along with glip.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+namespace Glip;
+
 final class Binary
 {
     static public function uint16($str, $pos=0)

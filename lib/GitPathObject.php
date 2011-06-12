@@ -18,18 +18,18 @@
  * along with glip.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once('git_object.class.php');
+namespace Glip;
 
 abstract class GitPathObject extends GitObject
 {
   protected
     $mode = null; // the mode of this object
-  
+
   public function getMode()
   {
     return $this->mode;
   }
-  
+
   public function setMode($mode)
   {
     if ($this->isReadOnly())
@@ -38,7 +38,7 @@ abstract class GitPathObject extends GitObject
     }
     $this->mode = $mode;
   }
-  
+
   /**
    * Constructor, sets mode of this object
    *
@@ -54,9 +54,9 @@ abstract class GitPathObject extends GitObject
     parent::__construct($git, $sha);
   }
 
-  /** 
+  /**
    * Gets all commits in which this object changed
-   * 
+   *
    * @param $commitTip The commit from where to start searching
    * @return array of GitCommit
    */
@@ -90,7 +90,7 @@ abstract class GitPathObject extends GitObject
   {
     $commit = $this->git->getCommitObject($from);
     $path = $this->getPath($commit);
-    
+
     $commits = $commit->getHistory();
     $commits = array_reverse($commits);
     $r = NULL;

@@ -18,8 +18,7 @@
  * along with glip.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once('git_object.class.php');
-require_once('git_commit_stamp.class.php');
+namespace Glip;
 
 /**
  * GitCommit resembles commit objects of a git repos
@@ -70,7 +69,7 @@ class GitCommit extends GitObject implements ArrayAccess, IteratorAggregate, Cou
   {
   	$lines = explode("\n", $data);
   	unset($data);
-  	
+
   	$meta = array('parent' => array());
   	while (($line = array_shift($lines)) != '')
   	{
@@ -80,24 +79,24 @@ class GitCommit extends GitObject implements ArrayAccess, IteratorAggregate, Cou
   	  else
   		  $meta[$parts[0]][] = $parts[1];
   	}
-  
+
   	$this->data['tree'] = new GitTree($this->git, $meta['tree'][0]);
-  	
+
   	$parents = array();
   	foreach ($meta['parent'] as $sha)
   	{
   	  $parents[] = new GitCommit($this->git, $sha);
   	}
   	$this->data['parents'] = $parents;
-  	
+
   	$this->data['author'] = new GitCommitStamp();
   	$this->data['author']->unserialize($meta['author'][0]);
-  	
+
   	$this->data['committer'] = new GitCommitStamp();
   	$this->data['committer']->unserialize($meta['committer'][0]);
-  
+
   	$this->data['summary'] = array_shift($lines);
-  	$this->data['detail'] = implode("\n", $lines);  
+  	$this->data['detail'] = implode("\n", $lines);
   }
 
   public function setMessage($message)
@@ -118,11 +117,11 @@ class GitCommit extends GitObject implements ArrayAccess, IteratorAggregate, Cou
 
   	$s .= sprintf("author %s\n", $this->author->serialize());
   	$s .= sprintf("committer %s\n", $this->committer->serialize());
-  	
+
   	$s .= "\n";
-  	
+
   	$s .= $this->summary."\n".$this->detail;
-  	
+
   	return $s;
   }
 
@@ -148,7 +147,7 @@ class GitCommit extends GitObject implements ArrayAccess, IteratorAggregate, Cou
     {
       /* count incoming edges */
       $inc = array();
-  
+
       $queue = array($this);
       while (($commit = array_shift($queue)) !== NULL)
       {
@@ -165,7 +164,7 @@ class GitCommit extends GitObject implements ArrayAccess, IteratorAggregate, Cou
           }
         }
       }
-  
+
       $queue = array($this);
       $this->commitHistory = array();
       while (($commit = array_pop($queue)) !== NULL)

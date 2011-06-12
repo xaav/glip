@@ -18,6 +18,8 @@
  * along with glip.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+namespace Glip;
+
 class GitCommitStamp
 {
     public $name;
@@ -39,7 +41,7 @@ class GitCommitStamp
     if (empty($email))
     {
       $this->email = "anonymous@".(isset($_SERVER) && isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : "unknown");
-    } 
+    }
     else
     {
       $this->email = $email;
