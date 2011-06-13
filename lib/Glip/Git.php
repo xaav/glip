@@ -20,7 +20,7 @@
 
 namespace Glip;
 
-class Git implements ArrayAccess
+class Git implements \ArrayAccess
 {
   protected
     $dir = "",          // (string) location of the git repository

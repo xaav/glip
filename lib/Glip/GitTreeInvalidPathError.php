@@ -19,4 +19,6 @@
  * along with glip.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+namespace Glip;
+
 class GitTreeInvalidPathError extends GitTreeError {}

@@ -20,7 +20,7 @@
 
 namespace Glip;
 
-class GitTree extends GitPathObject implements ArrayAccess, IteratorAggregate, Countable
+class GitTree extends GitPathObject implements \ArrayAccess, \IteratorAggregate, \Countable
 {
   protected
     $data = array(

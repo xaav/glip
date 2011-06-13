@@ -20,7 +20,7 @@
 
 namespace Glip;
 
-class GitBranch implements ArrayAccess
+class GitBranch implements \ArrayAccess
 {
   protected
     $git = null,        // the git repository

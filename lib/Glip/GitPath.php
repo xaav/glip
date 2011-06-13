@@ -23,7 +23,7 @@ namespace Glip;
 /**
 * GitPath regulates all paths in glip
 */
-class GitPath implements ArrayAccess, Iterator, Countable
+class GitPath implements \ArrayAccess, \Iterator, \Countable
 {
   protected
     $parts = array(),

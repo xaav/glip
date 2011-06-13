@@ -20,7 +20,7 @@
 
 namespace Glip;
 
-abstract class GitObject implements Serializable
+abstract class GitObject implements \Serializable
 {
   protected
     $git = null,        // the git repository this object belongs to

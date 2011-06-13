@@ -19,4 +19,6 @@
  * along with glip.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-class GitTreeError extends Exception {}
+namespace Glip;
+
+class GitTreeError extends \Exception {}

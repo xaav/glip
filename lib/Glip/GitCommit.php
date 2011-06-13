@@ -28,7 +28,7 @@ namespace Glip;
  * @package default
  * @author The Young Shepherd
  **/
-class GitCommit extends GitObject implements ArrayAccess, IteratorAggregate, Countable
+class GitCommit extends GitObject implements \ArrayAccess, \IteratorAggregate, \Countable
 {
   protected
     $data = array(
