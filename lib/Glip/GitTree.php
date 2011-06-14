@@ -259,7 +259,7 @@ class GitTree extends GitPathObject implements \ArrayAccess, \IteratorAggregate,
 
     if (!$object instanceof GitTree)
     {
-      throw new Exception(sprintf('Invalid path supplied: \'%s\', object is of class %s',(string)$path, get_class($object)));
+      throw new \Exception(sprintf('Invalid path supplied: \'%s\', object is of class %s',(string)$path, get_class($object)));
     }
 
     return $object[$path->getShifted()];
@@ -278,17 +278,17 @@ class GitTree extends GitPathObject implements \ArrayAccess, \IteratorAggregate,
 
     if (!$object instanceof GitBlob)
     {
-      throw new Exception('Object should be a GitBlob');
+      throw new \Exception('Object should be a GitBlob');
     }
 
     if ($this->isReadOnly())
     {
-      throw new Exception('Can not write to locked object');
+      throw new \Exception('Can not write to locked object');
     }
 
     if ($path->isRoot())
     {
-      throw new Exception('Can not set self to another object');
+      throw new \Exception('Can not set self to another object');
     }
 
     if ($path->isSingle())
@@ -314,7 +314,7 @@ class GitTree extends GitPathObject implements \ArrayAccess, \IteratorAggregate,
 
       if (!$sub instanceof GitTree)
       {
-        throw new Exception('Invalid path to set');
+        throw new \Exception('Invalid path to set');
       }
 
       $this->data['nodes'][$path[0]] = $sub;
@@ -334,7 +334,7 @@ class GitTree extends GitPathObject implements \ArrayAccess, \IteratorAggregate,
 
     if ($this->isReadOnly())
     {
-      throw new Exception('Can not write to locked object');
+      throw new \Exception('Can not write to locked object');
     }
 
     if (!$path->isSingle() && isset($this->nodes[$path[0]]))
@@ -342,7 +342,7 @@ class GitTree extends GitPathObject implements \ArrayAccess, \IteratorAggregate,
       $sub = $this->nodes[$path[0]];
       if (!$sub instanceof GitTree)
       {
-        throw new Exception('Invalid path');
+        throw new \Exception('Invalid path');
       }
       if ($sub->isReadOnly())
       {
@@ -354,7 +354,7 @@ class GitTree extends GitPathObject implements \ArrayAccess, \IteratorAggregate,
 
     if ($path->isRoot())
     {
-      throw new Exception('Can not unset self');
+      throw new \Exception('Can not unset self');
     }
 
     if ($path->isSingle() || count($this->data['nodes'][$path[0]]) == 0)

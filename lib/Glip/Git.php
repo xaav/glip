@@ -64,7 +64,7 @@ class Git implements \ArrayAccess
       case 'blob':   return Git::OBJ_BLOB;
       case 'tag':    return Git::OBJ_TAG;
     }
-    throw new Exception(sprintf('unknown type name: %s', $name));
+    throw new \Exception(sprintf('unknown type name: %s', $name));
   }
 
   /**
@@ -83,7 +83,7 @@ class Git implements \ArrayAccess
       case Git::OBJ_BLOB:   return 'blob';
       case Git::OBJ_TAG:    return 'tag';
     }
-    throw new Exception(sprintf('unknown type id: %s', $id));
+    throw new \Exception(sprintf('unknown type id: %s', $id));
   }
 
   /**
@@ -216,7 +216,7 @@ class Git implements \ArrayAccess
             /* packfile > 2 GB. Gee, you really want to handle this
              * much data with PHP?
              */
-            throw new Exception('64-bit packfiles offsets not implemented');
+            throw new \Exception('64-bit packfiles offsets not implemented');
           }
 
           fclose($index);
@@ -224,7 +224,7 @@ class Git implements \ArrayAccess
         }
         else
         {
-          throw new Exception('unsupported pack index format');
+          throw new \Exception('unsupported pack index format');
         }
       }
       fclose($index);
@@ -352,7 +352,7 @@ class Git implements \ArrayAccess
     }
     else
     {
-      throw new Exception(sprintf('object of unknown type %d', $type));
+      throw new \Exception(sprintf('object of unknown type %d', $type));
     }
 
     if (is_numeric($type))
@@ -398,14 +398,14 @@ class Git implements \ArrayAccess
         $magic = fread($pack, 4);
         $version = Binary::fuint32($pack);
         if ($magic != 'PACK' || $version != 2)
-          throw new Exception('unsupported pack format');
+          throw new \Exception('unsupported pack format');
 
         $cache[(string)$sha] = $this->unpackObject($pack, $object_offset);
         fclose($pack);
       }
       else
       {
-        throw new Exception(sprintf('object not found: %s', $sha->hex()));
+        throw new \Exception(sprintf('object not found: %s', $sha->hex()));
       }
     }
 
@@ -472,7 +472,7 @@ class Git implements \ArrayAccess
   {
     if (!$commit instanceof GitCommit)
     {
-      throw new InvalidArgumentException('No commit object supplied to update the branch to');
+      throw new \InvalidArgumentException('No commit object supplied to update the branch to');
     }
     $branch = $this[$branchName];
     $branch->updateTipTo($commit);
@@ -485,7 +485,7 @@ class Git implements \ArrayAccess
    */
   public function offsetUnset($branchName)
   {
-    throw new Exception('Cannot unset a branch');
+    throw new \Exception('Cannot unset a branch');
   }
 
 }

@@ -34,7 +34,7 @@ abstract class GitPathObject extends GitObject
   {
     if ($this->isReadOnly())
     {
-      throw new Exception('cannot set mode on a locked object');
+      throw new \Exception('cannot set mode on a locked object');
     }
     $this->mode = $mode;
   }

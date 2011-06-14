@@ -46,7 +46,7 @@ class SHA
         }
         else
         {
-          throw new Exception("SHA accepts only a valid hex or bin SHA string as argument, supplied '".$sha."'");
+          throw new \Exception("SHA accepts only a valid hex or bin SHA string as argument, supplied '".$sha."'");
         }
       }
     }
@@ -81,7 +81,7 @@ class SHA
   {
     if (is_null($this->bin))
     {
-      throw new Exception("The SHA hash is not computed");
+      throw new \Exception("The SHA hash is not computed");
     }
     return $this->bin;
   }

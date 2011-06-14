@@ -70,7 +70,7 @@ abstract class GitObject implements \Serializable
   {
     if (!is_null($this->serialized))
     {
-      throw new Exception("Can only set serialization on an uncomputed, not loaded object");
+      throw new \Exception("Can only set serialization on an uncomputed, not loaded object");
     }
     $this->serialized = $serialized;
   }
@@ -114,7 +114,7 @@ abstract class GitObject implements \Serializable
   {
     if (!$this->exists())
     {
-      throw new Exception('Can only load data of a locked object');
+      throw new \Exception('Can only load data of a locked object');
     }
 
     if (is_null($this->serialized))
@@ -123,7 +123,7 @@ abstract class GitObject implements \Serializable
 
       if ($type !== $this->getTypeName())
       {
-        throw new Exception('Error loading data of type \''.$type.'\' into object of type \''.$this->getTypeName().'\'');
+        throw new \Exception('Error loading data of type \''.$type.'\' into object of type \''.$this->getTypeName().'\'');
       }
     }
 
@@ -135,12 +135,12 @@ abstract class GitObject implements \Serializable
   {
     if ($this->isReadOnly())
     {
-      throw new Exception("Cannot set properties on a locked object");
+      throw new \Exception("Cannot set properties on a locked object");
     }
 
     if (!in_array($name, array_keys($this->data)))
     {
-      throw new Exception("$name is not a settable property of object ".get_class($this));
+      throw new \Exception("$name is not a settable property of object ".get_class($this));
     }
 
     $this->data[$name] = $value;
@@ -155,7 +155,7 @@ abstract class GitObject implements \Serializable
 
     if (!in_array($name, array_keys($this->data)))
     {
-      throw new Exception("$name is not a gettable property of object ".get_class($this));
+      throw new \Exception("$name is not a gettable property of object ".get_class($this));
     }
 
     return isset($this->data[$name]) ? $this->data[$name] : null;
@@ -209,7 +209,7 @@ abstract class GitObject implements \Serializable
    */
   public function unserialize($serialized)
   {
-    throw new Exception('Unserialize neeeds to be overridden');
+    throw new \Exception('Unserialize neeeds to be overridden');
   }
 
   /**

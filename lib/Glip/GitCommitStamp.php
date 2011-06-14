@@ -63,7 +63,7 @@ class GitCommitStamp
   public function serialize()
   {
   	if ($this->offset%60)
-  	    throw new Exception('cannot serialize sub-minute timezone offset');
+  	    throw new \Exception('cannot serialize sub-minute timezone offset');
   	return sprintf('%s <%s> %d %+05d', $this->name, $this->email, $this->time, intval($this->offset/3600)*100 + intval($this->offset/60)%60);
   }
 }
