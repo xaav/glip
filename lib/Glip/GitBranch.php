@@ -104,6 +104,14 @@ class GitBranch implements \ArrayAccess
   }
 
   /**
+   * Writes the branch to disk.
+   */
+  public function write()
+  {
+    throw new \Exception('Not implemented TODO');
+  }
+
+  /**
    * commit commits all changes in the stash to the tip of this branch
    *
    * @param GitStamp $stamp Stamp for the author&committer of this commit
