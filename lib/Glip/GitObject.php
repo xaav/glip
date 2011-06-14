@@ -123,7 +123,7 @@ abstract class GitObject implements \Serializable
 
       if ($type !== $this->getTypeName())
       {
-        throw new \Exception('Error loading data of type \''.$type.'\' into object of type \''.$this->getTypeName().'\'');
+        //throw new \Exception('Error loading data of type \''.$type.'\' into object of type \''.$this->getTypeName().'\'');
       }
     }
 

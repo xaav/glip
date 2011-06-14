@@ -40,7 +40,7 @@ class GitTree extends GitPathObject implements \ArrayAccess, \IteratorAggregate,
 
       $mode = intval($mode, 8);
       $is_dir = !!($mode & 040000);
-      $class = $is_dir ? "GitTree" : "GitBlob";
+      $class = "Glip\\" . ($is_dir ? "GitTree" : "GitBlob");
 
       $sha = new SHA(substr($data, $pos+1, 20));
 
