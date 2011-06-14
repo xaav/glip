@@ -55,7 +55,7 @@ class GitBranch implements \ArrayAccess
     }
     elseif (!is_null($stashSource))
     {
-      throw new InvalidArgumentException('StashSource is not an array-cache');
+      throw new \InvalidArgumentException('StashSource is not an array-cache');
     }
   }
 
@@ -116,7 +116,7 @@ class GitBranch implements \ArrayAccess
   {
     if (!$this->isDirty())
     {
-      throw new RuntimeException('Cannot commit empty stash');
+      throw new \RuntimeException('Cannot commit empty stash');
     }
     $commit = new GitCommit($this->getTip());
 
@@ -185,7 +185,7 @@ class GitBranch implements \ArrayAccess
         return $this->tipCache;
       }
     }
-    throw new Exception(sprintf('no such branch: %s', $branch));
+    throw new \Exception(sprintf('no such branch: %s', $branch));
   }
 
   /**
@@ -199,7 +199,7 @@ class GitBranch implements \ArrayAccess
     try {
       $tip = $this->getTip();
       return true;
-    } catch (Exception $e) {}
+    } catch (\Exception $e) {}
     return false;
   }
 
@@ -238,7 +238,7 @@ class GitBranch implements \ArrayAccess
     }
     else
     {
-      throw new Exception('Merge needed! TODO');
+      throw new \Exception('Merge needed! TODO');
     }
   }
 
