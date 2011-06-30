@@ -1,4 +1,4 @@
-'''Development has moved to http://github.com/xaav/GitBundle.'''
+***Development has moved to http://github.com/xaav/GitBundle.***
 
 glip is a Git Library In PHP. It allows you to access bare git repositories
 from PHP scripts, even without having git installed. The project's homepage is
