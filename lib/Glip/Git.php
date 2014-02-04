@@ -111,10 +111,11 @@ class Git implements \ArrayAccess
     }
 
     $this->packs = array();
-    $dh = opendir(sprintf('%s/objects/pack', $this->dir));
-    while (($entry = readdir($dh)) !== FALSE)
-      if (preg_match('#^pack-([0-9a-fA-F]{40})\.idx$#', $entry, $m))
-        $this->packs[] = new SHA($m[1]);
+    $dir = sprintf('%s/objects/pack', $this->dir);
+    if (is_dir($dir) and $dh = opendir(sprintf('%s/objects/pack', $this->dir)))
+        while (($entry = readdir($dh)) !== FALSE)
+        if (preg_match('#^pack-([0-9a-fA-F]{40})\.idx$#', $entry, $m))
+            $this->packs[] = new SHA($m[1]);
   }
 
   /**
